@@ -10,13 +10,24 @@ if not	Xer0X
 then	Xer0X = { }
 end
 
+local lib_uni = unicode.utf8
+for ii_key, ii_val in ipairs({ 'len', 'match', 'find', 'gmatch', 'gsub', 'lower', 'upper', 'byte' })
+do	local savedName = 'Utf8_'..ii_val
+	if not	lib_uni[savedName]
+	then	lib_uni[savedName] = lib_uni[ii_val]
+		lib_uni[ii_val] = function(str, ...) return (
+			lib_uni.utf8valid(str) and
+			lib_uni[savedName] or string[ii_val]
+				)(str, ...) end
+	end
+end
+
 local gsub	= utf8.gsub
 local match	= utf8.match
 local upper	= utf8.upper
 local strlen	= utf8.len
 local io_open	= io.open
 local uuid	= win.Uuid
-
 local GUID_ZERO	= "00000000-0000-0000-0000-000000000000"
 
 function Xer0X.fnc_str_escape_magic(str)	return(string.gsub(str, '[%^%$%(%)%%%.%[%]%*%+%-%?]', '%%%1')) end

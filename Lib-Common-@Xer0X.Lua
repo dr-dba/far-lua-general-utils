@@ -6,9 +6,7 @@
 
 -- #####
 
-if not	Xer0X 
-then	Xer0X = { }
-end
+if not	Xer0X then _G.Xer0X = { } end
 
 local lib_uni = unicode.utf8
 for ii_key, ii_val in ipairs({ 'len', 'match', 'find', 'gmatch', 'gsub', 'lower', 'upper', 'byte' })
@@ -21,6 +19,12 @@ do	local savedName = 'Utf8_'..ii_val
 				)(str, ...) end
 	end
 end
+
+local tbl_far_guid_names = { }
+for k, v in pairs(far.Guids)
+do tbl_far_guid_names[v] = k
+end
+Xer0X.tbl_far_guid_names = tbl_far_guid_names
 
 local gsub	= utf8.gsub
 local match	= utf8.match
@@ -44,9 +48,9 @@ end
 
 function Xer0X.fnc_str_cnt(str, toCount)
 	local i, j = 0, 0
-	while j < string.len(str) 
+	while j < string.len(str)
 	do
-		if string.sub(str, j, j + string.len(toCount) - 1) == toCount 
+		if string.sub(str, j, j + string.len(toCount) - 1) == toCount
 		then i = i + 1
 		end
 		j = j + 1
@@ -71,7 +75,7 @@ function Xer0X.fnc_norm_menu_value(item_text)
 			, "<&AND>", "")
 end
 
-function Xer0X.fnc_file_exists(file_path) 
+function Xer0X.fnc_file_exists(file_path)
 	local	hnd = io_open(file_path, "r")
 	if	hnd
 	then	hnd:close()
@@ -80,7 +84,7 @@ function Xer0X.fnc_file_exists(file_path)
 	end
 end
 
-local function fnc_tbl_copy(tbl_src)	
+local function fnc_tbl_copy(tbl_src)
 	local tbl_new = { }
 	local ii, val
 	repeat	ii, val = next(tbl_src, ii)
@@ -94,8 +98,8 @@ Xer0X.fnc_tbl_copy = fnc_tbl_copy
 Xer0X.fnc_norm_guid = function(the_guid)
 	if not	the_guid then return end
 	local	the_type = type(the_guid)
-	if	the_type == "number" 
-	or	the_type == "userdata" 
+	if	the_type == "number"
+	or	the_type == "userdata"
 	then	return
 	end
 	if	strlen(the_guid) <= 16

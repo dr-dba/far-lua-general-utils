@@ -6,7 +6,7 @@
 
 -- #####
 
-if not	Xer0X then _G.Xer0X = { } end
+if not Xer0X then _G.Xer0X = { } end
 
 local lib_uni = unicode.utf8
 for ii_key, ii_val in ipairs({ 'len', 'match', 'find', 'gmatch', 'gsub', 'lower', 'upper', 'byte' })

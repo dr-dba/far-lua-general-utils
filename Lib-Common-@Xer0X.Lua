@@ -2,12 +2,14 @@
 	"Православие или Смерть!" group
 
 	Common utils for general use.
+
+	Никто не несет ни за что никакую 
+	ОТВЕТСТВЕННОСТЬ
 ]]
 
 -- #####
 
 if not Xer0X then _G.Xer0X = { } end
-
 --[[ workaround dedicated to UTF8-related problems
 https://forum.farmanager.com/viewtopic.php?p=160846#p160846
 @BAX + @HaRT ]]

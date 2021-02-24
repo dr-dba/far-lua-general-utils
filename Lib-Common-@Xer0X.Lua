@@ -8,6 +8,9 @@
 
 if not Xer0X then _G.Xer0X = { } end
 
+--[[ workaround dedicated to UTF8-related problems
+https://forum.farmanager.com/viewtopic.php?p=160846#p160846
+@BAX + @HaRT ]]
 local lib_uni = unicode.utf8
 for ii_key, ii_val in ipairs({ 'len', 'match', 'find', 'gmatch', 'gsub', 'lower', 'upper', 'byte' })
 do	local savedName = 'Utf8_'..ii_val

@@ -2,9 +2,10 @@
 	"Православие или Смерть!" group
 
 	Common utils for general use.
-
-	Никто не несет ни за что никакую 
-	ОТВЕТСТВЕННОСТЬ
+		
+		DISCLAIMER
+	Никто не несет ни за что никакую
+		ОТВЕТСТВЕННОСТЬ
 ]]
 
 -- #####
@@ -119,8 +120,11 @@ end
 Xer0X.fnc_norm_script_path = function(scr_path)
 	if scr_path == nil then return end
 	local ret_val = scr_path
-		:gsub(win.GetEnv("FARPROFILE"), "%%FARPROFILE%%")
-		:gsub(win.GetEnv("FARHOME"), "%%FARHOME%%")
+		:gsub(win.GetEnv("APPDATA").."\\",	"%%APPDATA%%\\")
+		:gsub(win.GetEnv("LOCALAPPDATA").."\\",	"%%LOCALAPPDATA%%\\")
+		:gsub(win.GetEnv("USERNAME").."\\",	"%%USERNAME%%\\")
+		:gsub(win.GetEnv("FARPROFILE").."\\",	"%%FARPROFILE%%\\")
+		:gsub(win.GetEnv("FARHOME").."\\",	"%%FARHOME%%\\")
 	return ret_val
 end
 

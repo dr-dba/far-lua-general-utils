@@ -1,8 +1,9 @@
---[[		(c) Xer0X
+--[[
+		(c) Xer0X
 	"Православие или Смерть!" group
 
 	Common utils for general use.
-		
+
 		DISCLAIMER
 	Никто не несет ни за что никакую
 		ОТВЕТСТВЕННОСТЬ
@@ -22,7 +23,8 @@ do	local savedName = 'Utf8_'..ii_val
 		lib_uni[ii_val] = function(str, ...) return (
 			lib_uni.utf8valid(str) and
 			lib_uni[savedName] or string[ii_val]
-				)(str, ...) end
+				)(str, ...)
+		end
 	end
 end
 
@@ -115,7 +117,7 @@ Xer0X.fnc_norm_guid = function(the_guid)
 	then	return
 	end
 	return upper(the_guid)
-end
+end -- fnc_norm_guid(..)
 
 Xer0X.fnc_norm_script_path = function(scr_path)
 	if scr_path == nil then return end
@@ -129,13 +131,17 @@ Xer0X.fnc_norm_script_path = function(scr_path)
 end
 
 function Xer0X.fnc_safe_require(the_module, quiet)
-	local	req_res = false
-	local	ok, err_msg = pcall(function() req_res = require(the_module) end)
+	local	req_res_1, req_res_2, req_res_3, req_res_4, req_res_5
+	local	ok, err_msg = pcall(function()
+		req_res_1, req_res_2, req_res_3, req_res_4, req_res_5
+			= require(the_module)
+		end)
 	if not	ok and not quiet
 	then	far.Message(err_msg, "require "..the_module, nil, "w")
 	end
-	return ok, err_msg, req_res
+	return ok, err_msg, req_res_1, req_res_2, req_res_3, req_res_4, req_res_5
 end
+
 
 function Xer0X.fnc_file_text_load(sz_file_path)
 	local f = io.open(sz_file_path, "r")

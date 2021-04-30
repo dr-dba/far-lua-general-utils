@@ -1,4 +1,4 @@
---[[
+	--[[
 		(c) Xer0X
 	"Православие или Смерть!" group
 
@@ -155,5 +155,92 @@ function Xer0X.fnc_file_text_save(sz_file_path, text)
 	f:write(text)
 	f:close()
 end
+
+local function fnc_macro_key_run(key_inp)
+	local	is_macro
+	local	ret_code = eval(key_inp, 2)
+	if	ret_code == -2
+	then	ret_code = Keys(key_inp)
+		is_macro = false
+	else	is_macro = true
+	end
+	return	ret_code, is_macro
+end
+
+Xer0X.fnc_macro_key_run = fnc_macro_key_run
+
+
+local tmr_msg
+local TRANS_MSG_CLOSE_TIME_MS = 3000
+local TRANS_MSG_CHECK_TIME_MS = 100
+function Xer0X.fnc_trans_msg(msg_status, msg_title, msg_flags, msg_buttons, close_on_key_press)
+	if	tmr_msg
+	and not	tmr_msg.Closed
+	then	tmr_msg:Close()
+	end
+	if	msg_status == "OFF"
+	and not msg_title
+	and not msg_flags
+	and not msg_buttons
+	then	return
+	end
+	local	msg_res
+	local	is_transient = msg_buttons == ""
+	if	is_transient
+	then
+		local function fnc_msg_tmp(caller, t_start, close_on_key_press)
+			local is_timeout
+			::show_msg::
+			far.Message(msg_status, msg_title, msg_buttons, msg_flags)
+			::check_timeout::
+			is_timeout = is_timeout or t_start and (Far.UpTime - t_start > TRANS_MSG_CLOSE_TIME_MS)
+			if	caller
+			and not	caller.Closed
+			then	if	is_timeout
+				then	caller:Close()
+					far.AdvControl("ACTL_REDRAWALL")
+				else	if	close_on_key_press
+					then	caller.Enabled = false
+						local	sz_vk = mf.waitkey(TRANS_MSG_CHECK_TIME_MS - 1)
+						if	sz_vk == ""
+						then	goto show_msg
+						else	local ok_post, ret_msg = mf.postmacro(fnc_macro_key_run, sz_vk)
+							is_timeout = true
+							goto check_timeout
+						end
+                                        end
+				end
+			end
+		end
+		t1 = Far.UpTime
+		fnc_msg_tmp(tmr_msg)
+		tmr_msg = far.Timer(TRANS_MSG_CHECK_TIME_MS, fnc_msg_tmp, Far.UpTime, close_on_key_press)
+	else
+		msg_res = far.Message(msg_status, msg_title, msg_buttons, msg_flags)
+	end
+	return	msg_res
+end
+
+if not	_G.ffi
+then	_G.ffi = require("ffi")
+end
+local ffi = _G.ffi
+
+function Xer0X.fnc_ffi_cdef_safe(def, silent)
+	local res, msg = pcall(ffi.cdef, def)
+	return pcall(ffi.cdef, def)
+end
+
+Xer0X.fnc_ffi_cdef_safe([[
+static const ULONG SEE_MASK_NO_CONSOLE = 0x00008000"
+]])
+Xer0X.fnc_ffi_cdef_safe([[
+//https://docs.microsoft.com/en-us/windows/console/console-selection-info-str
+typedef struct _CONSOLE_SELECTION_INFO {
+  DWORD      dwFlags;
+  COORD      dwSelectionAnchor;
+  SMALL_RECT srSelection;
+} CONSOLE_SELECTION_INFO, *PCONSOLE_SELECTION_INFO;
+]])
 
 -- @@@@@

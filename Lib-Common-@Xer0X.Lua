@@ -28,8 +28,26 @@ do	local savedName = 'Utf8_'..ii_val
 	end
 end
 
+local far_Guids = far.Guids
+local far_Flags = far.Flags
+local ACTL_GETFARRECT	= far_Flags.ACTL_GETFARRECT
+local ACTL_GETCURSORPOS = far_Flags.ACTL_GETCURSORPOS
+local ACTL_SETCURSORPOS	= far_Flags.ACTL_SETCURSORPOS
+local ACTL_REDRAWALL	= far_Flags.ACTL_REDRAWALL
+local EOPT_SHOWTITLEBAR = far_Flags.EOPT_SHOWTITLEBAR
+local EOPT_SHOWKEYBAR	= far_Flags.EOPT_SHOWKEYBAR
+local EOPT_SHOWSCROLLBAR= far_Flags.EOPT_SHOWSCROLLBAR
+local DI_SINGLEBOX	= far_Flags.DI_SINGLEBOX
+local DI_TEXT		= far_Flags.DI_TEXT
+local FDLG_NONMODAL	= far_Flags.FDLG_NONMODAL
+local DN_CLOSE		= far_Flags.DN_CLOSE
+local editor_GetInfo	= editor.GetInfo
+local far_AdvControl	= far.AdvControl
+local math_max		= math.max
+local bit64_band	= bit64.band
+
 local tbl_far_guid_names = { }
-for k, v in pairs(far.Guids)
+for k, v in pairs(far_Guids)
 do tbl_far_guid_names[v] = k
 end
 Xer0X.tbl_far_guid_names = tbl_far_guid_names
@@ -198,7 +216,7 @@ function Xer0X.fnc_trans_msg(msg_status, msg_title, msg_flags, msg_buttons, clos
 			and not	caller.Closed
 			then	if	is_timeout
 				then	caller:Close()
-					far.AdvControl("ACTL_REDRAWALL")
+					far_AdvControl("ACTL_REDRAWALL")
 				else	if	close_on_key_press
 					then	caller.Enabled = false
 						local	sz_vk = mf.waitkey(TRANS_MSG_CHECK_TIME_MS - 1)
@@ -221,20 +239,96 @@ function Xer0X.fnc_trans_msg(msg_status, msg_title, msg_flags, msg_buttons, clos
 	return	msg_res
 end
 
+function Xer0X.fnc_cons_edit_curs_geomtr(editor_id, edit_info, curs_pstn, cons_rect)
+	edit_info = edit_info or editor_GetInfo(editor_id)
+	if not edit_info then return end
+	curs_pstn = curs_pstn or far_AdvControl(ACTL_GETCURSORPOS)
+	cons_rect = cons_rect or far_AdvControl(ACTL_GETFARRECT)
+	local tbl_rtvl = {
+		cons_rect	 = cons_rect,
+		curs_pstn	 = curs_pstn,
+		edit_info	 = edit_info,
+		DPosX	= math_max(curs_pstn.X - (edit_info.CurTabPos	+ 0 - edit_info.LeftPos		), 0),
+		DPosY	= math_max(curs_pstn.Y - (edit_info.CurLine	+ 0 - edit_info.TopScreenLine	), 0),
+		DSizeX	= math_max(cons_rect.Right	- cons_rect.Left+ 1 - edit_info.WindowSizeX,	0),
+		DSizeY	= math_max(cons_rect.Bottom	- cons_rect.Top	+ 1 - edit_info.WindowSizeY,	0),
+	}
+	tbl_rtvl.EPosX = math_max(tbl_rtvl.DSizeX - tbl_rtvl.DPosX, 0)
+	tbl_rtvl.EPosY = math_max(tbl_rtvl.DSizeY - tbl_rtvl.DPosY, 0)
+	tbl_rtvl.EPosX1= tbl_rtvl.DPosX
+	tbl_rtvl.EPosY1= tbl_rtvl.DPosY					- (bit64_band(edit_info.Options, EOPT_SHOWTITLEBAR)== EOPT_SHOWTITLEBAR	and 1 or 0)
+	tbl_rtvl.EPosX2= tbl_rtvl.EPosX1 + edit_info.WindowSizeX - 1	+ (bit64_band(edit_info.Options, EOPT_SHOWSCROLLBAR)==EOPT_SHOWSCROLLBAR and 1 or 0)
+	tbl_rtvl.EPosY2= tbl_rtvl.EPosY1 + edit_info.WindowSizeY - 1	+ (bit64_band(edit_info.Options, EOPT_SHOWKEYBAR ) == EOPT_SHOWKEYBAR	and 1 or 0)
+	return tbl_rtvl
+end
+
+function Xer0X.fnc_guid_name(guid)
+	if guid and guid:len() == 16 then guid = win.Uuid(guid) end
+	guid = guid and guid:upper() or ""
+	for n, v in pairs(far.Guids)
+	do	if v == guid
+		then return n 
+		end
+	end
+	return nil
+end -- fnc_guid_name
+
+function Xer0X.fnc_flag_name(flag, prefix)
+	prefix = prefix and "^"..prefix or ".+"
+	for  n, v in pairs(far_Flags)
+	do	if flag == v and n:find(prefix) 
+		then return n 
+		end
+	end
+	return nil
+end -- fnc_flag_name
+
+function Xer0X.fnc_flag_names(flags_bin, pfx_expr, strict)
+	local	str_flags = "NONE"
+	local	tbl_flags = { }
+	for	flag_str, flag_bin in pairs(far_Flags)
+	do	if (	pfx_expr == nil 
+		or	pfx_expr == ""
+		or	flag_str:match(pfx_expr)
+				) 
+		and (	strict 
+		and	flags_bin == flag_bin 
+		or not	strict 
+		and	band(flags_bin, flag_bin) == flag_bin
+				)
+		then
+			str_flags = str_flags.." "..flag_str.."/"..flag_bin
+			tbl_flags[flag_str] = true
+			if strict then break end
+		end
+	end
+	str_flags = str_flags:gsub("NONE ", "")
+	if	str_flags == "NONE"
+	then	str_flags =  "NONE/"..tostring(flags_bin)
+	end
+	return str_flags, tbl_flags
+end
+
 if not	_G.ffi
 then	_G.ffi = require("ffi")
 end
 local ffi = _G.ffi
 
-function Xer0X.fnc_ffi_cdef_safe(def, silent)
-	local res, msg = pcall(ffi.cdef, def)
-	return pcall(ffi.cdef, def)
+local function fnc_ffi_cdef_safe(def_txt, silent)
+	local res, err = pcall(ffi.cdef, def_txt)
+	if not	res 
+	and not silent
+	then	local dbginf = debug.getinfo(2, "nSl")
+		local msg = string.format("%s:%d\n---\n%s\n---\n%s", dbginf.short_src, dbginf.currentline, err, def_txt)
+		far.Message(msg, "FFi cDef load error", nil, "wl")
+	end
+	return res, err
 end
 
-Xer0X.fnc_ffi_cdef_safe([[
-static const ULONG SEE_MASK_NO_CONSOLE = 0x00008000"
+fnc_ffi_cdef_safe([[
+static const ULONG SEE_MASK_NO_CONSOLE = 0x00008000;
 ]])
-Xer0X.fnc_ffi_cdef_safe([[
+fnc_ffi_cdef_safe([[
 //https://docs.microsoft.com/en-us/windows/console/console-selection-info-str
 typedef struct _CONSOLE_SELECTION_INFO {
   DWORD      dwFlags;
@@ -242,5 +336,7 @@ typedef struct _CONSOLE_SELECTION_INFO {
   SMALL_RECT srSelection;
 } CONSOLE_SELECTION_INFO, *PCONSOLE_SELECTION_INFO;
 ]])
+
+Xer0X.fnc_ffi_cdef_safe = fnc_ffi_cdef_safe
 
 -- @@@@@

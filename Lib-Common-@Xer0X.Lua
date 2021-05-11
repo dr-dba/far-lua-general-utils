@@ -1,4 +1,4 @@
-	--[[
+--[[
 		(c) Xer0X
 	"Православие или Смерть!" group
 
@@ -12,6 +12,7 @@
 -- #####
 
 if not Xer0X then _G.Xer0X = { } end
+
 --[[ workaround dedicated to UTF8-related problems
 https://forum.farmanager.com/viewtopic.php?p=160846#p160846
 @BAX + @HaRT ]]
@@ -239,6 +240,16 @@ function Xer0X.fnc_trans_msg(msg_status, msg_title, msg_flags, msg_buttons, clos
 	return	msg_res
 end
 
+function Xer0X.fnc_case_title(str)
+	local function fnc_title_int(first, rest) return first:upper()..rest:lower() end
+	return string.gsub(str, "(%a)([%w']*)", fnc_title_int)
+end
+
+function Xer0X.fnc_case_toggle(str)
+	local function fnc_toggle_int(first, rest) return first:lower()..rest:upper() end
+	return string.gsub(str, "(%a)([%w']*)", fnc_toggle_int)
+end
+
 function Xer0X.fnc_cons_edit_curs_geomtr(editor_id, edit_info, curs_pstn, cons_rect)
 	edit_info = edit_info or editor_GetInfo(editor_id)
 	if not edit_info then return end
@@ -267,7 +278,7 @@ function Xer0X.fnc_guid_name(guid)
 	guid = guid and guid:upper() or ""
 	for n, v in pairs(far.Guids)
 	do	if v == guid
-		then return n 
+		then return n
 		end
 	end
 	return nil
@@ -276,8 +287,8 @@ end -- fnc_guid_name
 function Xer0X.fnc_flag_name(flag, prefix)
 	prefix = prefix and "^"..prefix or ".+"
 	for  n, v in pairs(far_Flags)
-	do	if flag == v and n:find(prefix) 
-		then return n 
+	do	if flag == v and n:find(prefix)
+		then return n
 		end
 	end
 	return nil
@@ -287,13 +298,13 @@ function Xer0X.fnc_flag_names(flags_bin, pfx_expr, strict)
 	local	str_flags = "NONE"
 	local	tbl_flags = { }
 	for	flag_str, flag_bin in pairs(far_Flags)
-	do	if (	pfx_expr == nil 
+	do	if (	pfx_expr == nil
 		or	pfx_expr == ""
 		or	flag_str:match(pfx_expr)
-				) 
-		and (	strict 
-		and	flags_bin == flag_bin 
-		or not	strict 
+				)
+		and (	strict
+		and	flags_bin == flag_bin
+		or not	strict
 		and	band(flags_bin, flag_bin) == flag_bin
 				)
 		then
@@ -316,7 +327,7 @@ local ffi = _G.ffi
 
 local function fnc_ffi_cdef_safe(def_txt, silent)
 	local res, err = pcall(ffi.cdef, def_txt)
-	if not	res 
+	if not	res
 	and not silent
 	then	local dbginf = debug.getinfo(2, "nSl")
 		local msg = string.format("%s:%d\n---\n%s\n---\n%s", dbginf.short_src, dbginf.currentline, err, def_txt)
@@ -331,12 +342,14 @@ static const ULONG SEE_MASK_NO_CONSOLE = 0x00008000;
 fnc_ffi_cdef_safe([[
 //https://docs.microsoft.com/en-us/windows/console/console-selection-info-str
 typedef struct _CONSOLE_SELECTION_INFO {
-  DWORD      dwFlags;
-  COORD      dwSelectionAnchor;
-  SMALL_RECT srSelection;
+	DWORD		dwFlags;
+	COORD		dwSelectionAnchor;
+	SMALL_RECT	srSelection;
 } CONSOLE_SELECTION_INFO, *PCONSOLE_SELECTION_INFO;
 ]])
 
 Xer0X.fnc_ffi_cdef_safe = fnc_ffi_cdef_safe
+
+return Xer0X
 
 -- @@@@@

@@ -2,7 +2,7 @@
 		(c) Xer0X
 	"Православие или Смерть!" group
 
-	Common utils for general use.
+	Common utils for the general use.
 
 		DISCLAIMER
 	Никто не несет ни за что никакую

@@ -120,7 +120,32 @@ local function fnc_tbl_copy(tbl_src)
 	return tbl_new
 end
 
-Xer0X.fnc_tbl_copy = fnc_tbl_copy
+local function fnc_tbl_copy_to(tbl_from, tbl_dest)
+	if not	tbl_dest
+	then	tbl_dest = { }
+	end
+	for ii_key, ii_val in next, tbl_from
+	do	if type(ii_val) == "table"
+		then tbl_dest[ii_key] = fnc_tbl_copy_to(ii_val, tbl_dest[ii_key])
+		else tbl_dest[ii_key] = ii_val
+		end
+        end
+        return tbl_dest
+end
+
+Xer0X.fnc_tbl_copy	= fnc_tbl_copy
+Xer0X.fnc_tbl_copy_to	= fnc_tbl_copy_to
+
+function Xer0X.fnc_tbl_count(t)
+	if type(t) ~= "table"
+	then return -1
+	end
+	local n = 0
+	for k, v in next, t
+	do n = n + 1
+	end
+	return n
+end
 
 Xer0X.fnc_norm_guid = function(the_guid)
 	if not	the_guid then return end
@@ -318,6 +343,28 @@ function Xer0X.fnc_flag_names(flags_bin, pfx_expr, strict)
 	then	str_flags =  "NONE/"..tostring(flags_bin)
 	end
 	return str_flags, tbl_flags
+end
+
+function Xer0X.fnc_str_split(str_inp, sep, uniq_only) 
+	if	sep == nil
+	then	sep = "%s"
+	end
+	local tbl_res = { }
+	local tbl_unq = uniq_only and { }
+	local ii = 1
+	for ii_str in string.gmatch(str_inp, "([^"..sep.."]+)")
+	do	if	uniq_only
+		then	if	tbl_unq[ii_str]
+			then	tbl_unq[ii_str] = 1 + tbl_unq[ii_str]
+			else	tbl_unq[ii_str] = 1
+				tbl_res[ii] = ii_str
+				ii = ii + 1
+			end
+		else	tbl_res[ii] = ii_str
+			ii = ii + 1
+		end
+	end
+	return tbl_res, tbl_unq
 end
 
 if not	_G.ffi

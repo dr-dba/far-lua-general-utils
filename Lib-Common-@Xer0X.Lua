@@ -231,6 +231,54 @@ end
 Xer0X.fnc_macro_key_run = fnc_macro_key_run
 
 
+Xer0X.obj_screen_status_line = {
+	stop = function(self)
+		self.timer:Close()
+	end,
+	start = function(self)
+		self:set(self.text_show, self.color_txt, self.time_show)
+	end,
+	is_run = function(self)
+		return self.timer and not self.timer.Closed
+	end,
+	set = function(self, text_str, txt_color, ms_show_time, in_timer)
+		if not	in_timer
+		then	if	self.timer
+			and not self.timer.Closed
+			and (	self.text ~= text_str
+			or	ms_show_time
+			or not	text_str)
+			then	self.timer:Close()
+				far.AdvControl("ACTL_REDRAWALL")
+			end
+			if	self.text_show ~= text_str
+			then	self.text_show  = text_str
+				self.color_txt  = txt_color
+				self.time_show  = ms_show_time
+			end
+			if	ms_show_time
+			and	text_str
+			then	self.timeStart = Far.UpTime
+				self.timer = far.Timer(100, function(sender, t_show_start, text_str)
+					if type(ms_show_time) == "number"
+					and	ms_show_time < Far.UpTime - t_show_start
+					then	self.timer:Close()
+						far.AdvControl("ACTL_REDRAWALL")
+					else	self:set(text_str, txt_color, nil, true)
+					end
+				end, self.timeStart, self.text_show)
+			end
+		end
+		if text_str
+		then far.Text(
+			1, 0, txt_color or CLR_STATUS_TEXT,
+			text_str == "" and "" or " "..text_str.." "
+				)
+		end
+		far.Text()
+	end -- fnc_status_set
+} 
+
 local tmr_msg
 local TRANS_MSG_CLOSE_TIME_MS = 3000
 local TRANS_MSG_CHECK_TIME_MS = 100

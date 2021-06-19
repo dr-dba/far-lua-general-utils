@@ -29,8 +29,10 @@ do	local savedName = 'Utf8_'..ii_val
 	end
 end
 
-local far_Guids = far.Guids
+local far_Guids	= far.Guids
 local far_Flags = far.Flags
+local far_Colors= far.Colors
+
 local ACTL_GETFARRECT	= far_Flags.ACTL_GETFARRECT
 local ACTL_GETCURSORPOS = far_Flags.ACTL_GETCURSORPOS
 local ACTL_SETCURSORPOS	= far_Flags.ACTL_SETCURSORPOS
@@ -42,16 +44,27 @@ local DI_SINGLEBOX	= far_Flags.DI_SINGLEBOX
 local DI_TEXT		= far_Flags.DI_TEXT
 local FDLG_NONMODAL	= far_Flags.FDLG_NONMODAL
 local DN_CLOSE		= far_Flags.DN_CLOSE
+
 local editor_GetInfo	= editor.GetInfo
 local far_AdvControl	= far.AdvControl
 local math_max		= math.max
 local bit64_band	= bit64.band
+-- C.COL_MENUTITLE
+local CLR_MENU_TEXT	= far_AdvControl(far_Flags.ACTL_GETCOLOR, far_Colors.COL_MENUHIGHLIGHT)
 
-local tbl_far_guid_names = { }
-for k, v in pairs(far_Guids)
-do tbl_far_guid_names[v] = k
-end
-Xer0X.tbl_far_guid_names = tbl_far_guid_names
+local str_lower = utf8.Utf8_lower	or utf8.lower
+local str_upper = utf8.Utf8_upper	or utf8.upper
+local str_gmatch= utf8.Utf8_gmatch	or utf8.gmatch
+local str_match = utf8.Utf8_match	or utf8.match
+local str_find	= utf8.Utf8_find	or utf8.find
+local str_gsub	= utf8.Utf8_gsub	or utf8.gsub
+local str_len	= utf8.Utf8_len		or utf8.len
+local str_sub	= utf8.sub
+local str_cfind = utf8.cfind
+local str_format= utf8.format
+local math_max	= math.max
+local tbl_concat= table.concat
+local tbl_insert= table.insert
 
 local gsub	= utf8.gsub
 local match	= utf8.match
@@ -60,6 +73,12 @@ local strlen	= utf8.len
 local io_open	= io.open
 local uuid	= win.Uuid
 local GUID_ZERO	= "00000000-0000-0000-0000-000000000000"
+
+local tbl_far_guid_names = { }
+for k, v in pairs(far_Guids)
+do tbl_far_guid_names[v] = k
+end
+Xer0X.tbl_far_guid_names = tbl_far_guid_names
 
 function Xer0X.fnc_str_escape_magic(str)	return(string.gsub(str, '[%^%$%(%)%%%.%[%]%*%+%-%?]', '%%%1')) end
 
@@ -271,7 +290,7 @@ Xer0X.obj_screen_status_line = {
 		end
 		if text_str
 		then far.Text(
-			1, 0, txt_color or CLR_STATUS_TEXT,
+			1, 0, txt_color or CLR_MENU_TEXT,
 			text_str == "" and "" or " "..text_str.." "
 				)
 		end

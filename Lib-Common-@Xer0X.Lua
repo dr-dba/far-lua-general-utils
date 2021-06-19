@@ -76,8 +76,7 @@ end
 function Xer0X.fnc_str_cnt(str, toCount)
 	local i, j = 0, 0
 	while j < string.len(str)
-	do
-		if string.sub(str, j, j + string.len(toCount) - 1) == toCount
+	do	if string.sub(str, j, j + string.len(toCount) - 1) == toCount
 		then i = i + 1
 		end
 		j = j + 1
@@ -120,17 +119,35 @@ local function fnc_tbl_copy(tbl_src)
 	return tbl_new
 end
 
-local function fnc_tbl_copy_to(tbl_from, tbl_dest)
-	if not	tbl_dest
-	then	tbl_dest = { }
+local function fnc_tbl_copy_to(tbl_from, key_from, tbl_dest, fnc_how)
+	if	key_from
+	and	type(key_from) == "table"
+	and(	type(tbl_dest) == "nil"
+	or	type(tbl_dest) == "function")
+	and	type(fnc_how ) == "nil"
+	then	fnc_how  = tbl_dest
+		tbl_dest = key_from
+		key_from = nil
 	end
-	for ii_key, ii_val in next, tbl_from
+	local	tbl_dest_loc = tbl_dest
+	if not	tbl_dest_loc
+	then	tbl_dest_loc = { }
+		tbl_dest = tbl_dest_loc
+	end
+	if	key_from
+	then	if not	tbl_dest_loc[key_from]
+		then	tbl_dest_loc[key_from] = { }
+		end
+		tbl_dest_loc = tbl_dest_loc[key_from]
+	end
+	local	tbl_from_loc = key_from and tbl_from[key_from] or tbl_from
+	for ii_key, ii_val in next, tbl_from_loc
 	do	if type(ii_val) == "table"
-		then tbl_dest[ii_key] = fnc_tbl_copy_to(ii_val, tbl_dest[ii_key])
-		else tbl_dest[ii_key] = ii_val
+		then tbl_dest_loc[ii_key] = fnc_tbl_copy_to(tbl_from_loc, ii_key, tbl_dest_loc, fnc_how)
+		else tbl_dest_loc[ii_key] = fnc_how and fnc_how(tbl_from, tbl_from_loc, tbl_dest, tbl_dest_loc, ii_key, ii_val) or ii_val
 		end
         end
-        return tbl_dest
+        return	tbl_dest_loc
 end
 
 Xer0X.fnc_tbl_copy	= fnc_tbl_copy

@@ -11,6 +11,25 @@
 
 -- #####
 
+-- ### OPTIONS BLOCK ###
+
+-- luacheck: ignore 113/Info
+local Info = Info or package.loaded.regscript or function(...) return ... end
+local nfo = Info({
+	_filename or ...,
+	name		= "Lib-Common-@Xer0X",
+	-- запуск макросов нетрадиционными способами
+	description	= "general helping objects and functions",
+	id		= "9809B969-68C5-4188-BC1D-77DF21E5CAB7",
+	version		= "0.1",
+	author		= "x-Team",
+	url_git		= "https://github.com/dr-dba/far-lua-general-utils",
+})
+if not nfo then return end
+local opts = nfo.options
+
+-- @@@ END OF THE OPTIONS BLOCK @@@
+
 if not Xer0X then _G.Xer0X = { } end
 
 --[[ workaround dedicated to UTF8-related problems
@@ -71,36 +90,36 @@ local match	= utf8.match
 local upper	= utf8.upper
 local strlen	= utf8.len
 local io_open	= io.open
-local uuid	= win.Uuid
+local win_uuid	= win.Uuid
 local GUID_ZERO	= "00000000-0000-0000-0000-000000000000"
 
-local tbl_far_guid_names = { }
+local	tbl_far_guid_names = { }
 for k, v in pairs(far_Guids)
-do tbl_far_guid_names[v] = k
+do	tbl_far_guid_names[v] = k
 end
 Xer0X.tbl_far_guid_names = tbl_far_guid_names
 
-function Xer0X.fnc_str_escape_magic(str)	return(string.gsub(str, '[%^%$%(%)%%%.%[%]%*%+%-%?]', '%%%1')) end
+function Xer0X.fnc_str_escape_magic(str)	return(str_gsub(str, '[%^%$%(%)%%%.%[%]%*%+%-%?]', '%%%1')) end
 
-function Xer0X.fnc_str_replace(str, orig, subs) return string.gsub(str, Xer0X.fnc_str_escape_magic(orig), subs)	end
+function Xer0X.fnc_str_replace(str, orig, subs) return str_gsub(str, Xer0X.fnc_str_escape_magic(orig), subs)end
 
 function Xer0X.fnc_str_ins(string, insert, position)
-	return string.sub(string, 1, position)..insert..string.sub(string, position + 1)
+	return str_sub(string, 1, position)..insert..str_sub(string, position + 1)
 end
 
-function Xer0X.fnc_str_del(string, from, to)
-	return string.sub(string, 1, from - 1)..(j ~= nil and string.sub(string, from + to) or string.sub(string, from + 1))
+function Xer0X.fnc_str_del(str, from, to)
+	return str_sub(str, 1, from - 1)..(to and str_sub(str, from + to) or str_sub(str, from + 1))
 end
 
-function Xer0X.fnc_str_cnt(str, toCount)
-	local i, j = 0, 0
-	while j < string.len(str)
-	do	if string.sub(str, j, j + string.len(toCount) - 1) == toCount
-		then i = i + 1
+function Xer0X.fnc_str_cnt(str, str_to_count)
+	local ii, jj = 0, 0
+	while jj < str_len(str)
+	do	if str_to_count == str_sub(str, jj, jj + str_len(str_to_count) - 1) 
+		then ii = ii + 1
 		end
-		j = j + 1
+		jj = jj + 1
 	end
-	return i
+	return ii
 end
 
 function Xer0X.fnc_str_trim1(str) return str and gsub(str, "^%s*(.-)%s*$", "%1") or str end
@@ -111,13 +130,13 @@ function Xer0X.fnc_str_trim_right(str)	return match(str, "(.-)%s*$") end
 
 function Xer0X.fnc_norm_menu_value(item_text)
 	return item_text and
-		string.gsub(
-		string.gsub(
-		string.gsub(
+		str_gsub(
+		str_gsub(
+		str_gsub(
 			Xer0X.fnc_str_trim1(item_text)
-			, "&", "<&AND>")
-			, "<&AND><&AND>", "&")
-			, "<&AND>", "")
+			, "&", "<&AND>"		)
+			, "<&AND><&AND>", "&"	)
+			, "<&AND>", ""		)
 end
 
 function Xer0X.fnc_file_exists(file_path)
@@ -130,44 +149,54 @@ function Xer0X.fnc_file_exists(file_path)
 end
 
 local function fnc_tbl_copy(tbl_src)
-	local tbl_new = { }
-	local ii, val
+	local	tbl_new = { }
+	local	ii, val
 	repeat	ii, val = next(tbl_src, ii)
 		if ii then tbl_new[ii] = type(val) == "table" and fnc_tbl_copy(val) or val end
 	until not ii
 	return tbl_new
 end
 
-local function fnc_tbl_copy_to(tbl_from, key_from, tbl_dest, fnc_how)
-	if	key_from
-	and	type(key_from) == "table"
-	and(	type(tbl_dest) == "nil"
-	or	type(tbl_dest) == "function")
-	and	type(fnc_how ) == "nil"
-	then	fnc_how  = tbl_dest
-		tbl_dest = key_from
-		key_from = nil
+local function fnc_tbl_copy_to(tbl_from, key_from, tbl_dest, fnc_how_tbl, fnc_how_val)
+	if type(key_from)	== "table"
+	and (	tbl_dest	== nil
+	or	type(tbl_dest)	== "function")
+	and	fnc_how_val	== nil
+	then	fnc_how_val	 = fnc_how_tbl
+		fnc_how_tbl	 = tbl_dest
+		tbl_dest	 = key_from
+		key_from	 = nil
 	end
-	local	tbl_dest_loc = tbl_dest
-	if not	tbl_dest_loc
-	then	tbl_dest_loc = { }
-		tbl_dest = tbl_dest_loc
+	if not	tbl_dest
+	then	tbl_dest = { }
 	end
+	local	tbl_from_loc
+	local	tbl_dest_loc
 	if	key_from
-	then	if not	tbl_dest_loc[key_from]
-		then	tbl_dest_loc[key_from] = { }
+	then	if not	tbl_dest[key_from]
+		then	tbl_dest[key_from] = { }
 		end
-		tbl_dest_loc = tbl_dest_loc[key_from]
+		tbl_from_loc = tbl_from[key_from]
+		tbl_dest_loc = tbl_dest[key_from]
+	else	tbl_from_loc = tbl_from
+		tbl_dest_loc = tbl_dest
+		tbl_from = nil
+		tbl_dest = nil
 	end
-	local	tbl_from_loc = key_from and tbl_from[key_from] or tbl_from
-	for ii_key, ii_val in next, tbl_from_loc
+	for ii_key, ii_val in pairs(tbl_from_loc)
 	do	if type(ii_val) == "table"
-		then tbl_dest_loc[ii_key] = fnc_tbl_copy_to(tbl_from_loc, ii_key, tbl_dest_loc, fnc_how)
-		else tbl_dest_loc[ii_key] = fnc_how and fnc_how(tbl_from, tbl_from_loc, tbl_dest, tbl_dest_loc, ii_key, ii_val) or ii_val
+		then	if not	fnc_how_tbl
+			or not	fnc_how_tbl(tbl_from, tbl_from_loc, tbl_dest, tbl_dest_loc, ii_key, ii_val)
+			then	tbl_dest_loc[ii_key] = fnc_tbl_copy_to(tbl_from_loc, ii_key, tbl_dest_loc, fnc_how_tbl, fnc_how_val)
+			end
+		else	if not	fnc_how_val
+			or not	fnc_how_val(tbl_from, tbl_from_loc, tbl_dest, tbl_dest_loc, ii_key, ii_val)
+			then	tbl_dest_loc[ii_key] = ii_val
+			end
 		end
         end
         return	tbl_dest_loc
-end
+end -- fnc_tbl_copy_to
 
 Xer0X.fnc_tbl_copy	= fnc_tbl_copy
 Xer0X.fnc_tbl_copy_to	= fnc_tbl_copy_to
@@ -191,7 +220,7 @@ Xer0X.fnc_norm_guid = function(the_guid)
 	then	return
 	end
 	if	strlen(the_guid) <= 16
-	then 	the_guid = uuid(the_guid)
+	then 	the_guid = win_uuid(the_guid)
 	end
 	if 	the_guid == GUID_ZERO or not the_guid
 	then	return
@@ -383,7 +412,10 @@ function Xer0X.fnc_cons_edit_curs_geomtr(editor_id, edit_info, curs_pstn, cons_r
 end
 
 function Xer0X.fnc_guid_name(guid)
-	if guid and guid:len() == 16 then guid = win.Uuid(guid) end
+	if	guid 
+	and	guid:len() == 16 
+	then	guid = win_uuid(guid) 
+	end
 	guid = guid and guid:upper() or ""
 	for n, v in pairs(far.Guids)
 	do	if v == guid
@@ -395,8 +427,9 @@ end -- fnc_guid_name
 
 function Xer0X.fnc_flag_name(flag, prefix)
 	prefix = prefix and "^"..prefix or ".+"
-	for  n, v in pairs(far_Flags)
-	do	if flag == v and n:find(prefix)
+	for n, v in pairs(far_Flags)
+	do	if flag == v 
+		and n:find(prefix)
 		then return n
 		end
 	end
@@ -404,12 +437,12 @@ function Xer0X.fnc_flag_name(flag, prefix)
 end -- fnc_flag_name
 
 function Xer0X.fnc_flag_names(flags_bin, pfx_expr, strict)
-	local	str_flags = "NONE"
-	local	tbl_flags = { }
-	for	flag_str, flag_bin in pairs(far_Flags)
+	local str_flags = "NONE"
+	local tbl_flags = { }
+	for flag_str, flag_bin in pairs(far_Flags)
 	do	if (	pfx_expr == nil
 		or	pfx_expr == ""
-		or	flag_str:match(pfx_expr)
+		or	str_match(flag_str, pfx_expr)
 				)
 		and (	strict
 		and	flags_bin == flag_bin
@@ -422,7 +455,7 @@ function Xer0X.fnc_flag_names(flags_bin, pfx_expr, strict)
 			if strict then break end
 		end
 	end
-	str_flags = str_flags:gsub("NONE ", "")
+	str_flags = str_gsub(str_flags, "NONE ", "")
 	if	str_flags == "NONE"
 	then	str_flags =  "NONE/"..tostring(flags_bin)
 	end
@@ -436,7 +469,7 @@ function Xer0X.fnc_str_split(str_inp, sep, uniq_only)
 	local tbl_res = { }
 	local tbl_unq = uniq_only and { }
 	local ii = 1
-	for ii_str in string.gmatch(str_inp, "([^"..sep.."]+)")
+	for ii_str in str_gmatch(str_inp, "([^"..sep.."]+)")
 	do	if	uniq_only
 		then	if	tbl_unq[ii_str]
 			then	tbl_unq[ii_str] = 1 + tbl_unq[ii_str]
@@ -457,27 +490,15 @@ end
 local ffi = _G.ffi
 
 local function fnc_ffi_cdef_safe(def_txt, silent)
-	local res, err = pcall(ffi.cdef, def_txt)
+	local	res, err = pcall(ffi.cdef, def_txt)
 	if not	res
 	and not silent
 	then	local dbginf = debug.getinfo(2, "nSl")
 		local msg = string.format("%s:%d\n---\n%s\n---\n%s", dbginf.short_src, dbginf.currentline, err, def_txt)
 		far.Message(msg, "FFi cDef load error", nil, "wl")
 	end
-	return res, err
+	return	res, err
 end
-
-fnc_ffi_cdef_safe([[
-static const ULONG SEE_MASK_NO_CONSOLE = 0x00008000;
-]])
-fnc_ffi_cdef_safe([[
-//https://docs.microsoft.com/en-us/windows/console/console-selection-info-str
-typedef struct _CONSOLE_SELECTION_INFO {
-	DWORD		dwFlags;
-	COORD		dwSelectionAnchor;
-	SMALL_RECT	srSelection;
-} CONSOLE_SELECTION_INFO, *PCONSOLE_SELECTION_INFO;
-]])
 
 Xer0X.fnc_ffi_cdef_safe = fnc_ffi_cdef_safe
 

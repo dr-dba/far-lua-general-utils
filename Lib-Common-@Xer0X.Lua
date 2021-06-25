@@ -114,7 +114,7 @@ end
 function Xer0X.fnc_str_cnt(str, str_to_count)
 	local ii, jj = 0, 0
 	while jj < str_len(str)
-	do	if str_to_count == str_sub(str, jj, jj + str_len(str_to_count) - 1) 
+	do	if str_to_count == str_sub(str, jj, jj + str_len(str_to_count) - 1)
 		then ii = ii + 1
 		end
 		jj = jj + 1
@@ -412,9 +412,9 @@ function Xer0X.fnc_cons_edit_curs_geomtr(editor_id, edit_info, curs_pstn, cons_r
 end
 
 function Xer0X.fnc_guid_name(guid)
-	if	guid 
-	and	guid:len() == 16 
-	then	guid = win_uuid(guid) 
+	if	guid
+	and	guid:len() == 16
+	then	guid = win_uuid(guid)
 	end
 	guid = guid and guid:upper() or ""
 	for n, v in pairs(far.Guids)
@@ -428,7 +428,7 @@ end -- fnc_guid_name
 function Xer0X.fnc_flag_name(flag, prefix)
 	prefix = prefix and "^"..prefix or ".+"
 	for n, v in pairs(far_Flags)
-	do	if flag == v 
+	do	if flag == v
 		and n:find(prefix)
 		then return n
 		end
@@ -501,6 +501,7 @@ local function fnc_ffi_cdef_safe(def_txt, silent)
 end
 
 Xer0X.fnc_ffi_cdef_safe = fnc_ffi_cdef_safe
+
 
 return Xer0X
 

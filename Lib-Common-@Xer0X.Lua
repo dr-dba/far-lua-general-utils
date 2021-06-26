@@ -21,7 +21,7 @@ local nfo = Info({
 	-- запуск макросов нетрадиционными способами
 	description	= "general helping objects and functions",
 	id		= "9809B969-68C5-4188-BC1D-77DF21E5CAB7",
-	version		= "0.1",
+	version		= "0.1.1",
 	author		= "x-Team",
 	url_git		= "https://github.com/dr-dba/far-lua-general-utils",
 })
@@ -387,6 +387,26 @@ function Xer0X.fnc_case_toggle(str)
 	local function fnc_toggle_int(first, rest) return first:lower()..rest:upper() end
 	return string.gsub(str, "(%a)([%w']*)", fnc_toggle_int)
 end
+
+function Xer0X.fnc_key_prettify(str_key)
+	local function fnc_key_title(str_key)
+		local function fnc_key_title_loc(first, rest) 
+			return first..rest:sub(1, 1):upper()..rest:sub(2)
+		end
+		return fnc_key_title_loc("", str_key)
+			:gsub("(Ctrl)([%w']*)"	, fnc_key_title_loc)
+			:gsub("(Alt)([%w']*)"	, fnc_key_title_loc)
+			:gsub("(Shift)([%w']*)"	, fnc_key_title_loc)
+	end
+	return fnc_key_title(str_key
+		:gsub("shift",	"Shift"	)
+		:gsub("rctrl",	"RCtrl"	)
+		:gsub("lctrl",	"LCtrl"	)
+		:gsub("ctrl",	"Ctrl"	)
+		:gsub("ralt",	"RAlt"	)
+		:gsub("lalt",	"LAlt"	)
+		:gsub("alt",	"Alt"	))
+end -- fnc_key_prettify
 
 function Xer0X.fnc_cons_edit_curs_geomtr(editor_id, edit_info, curs_pstn, cons_rect)
 	edit_info = edit_info or editor_GetInfo(editor_id)

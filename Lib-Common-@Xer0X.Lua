@@ -21,7 +21,7 @@ local nfo = Info({
 	-- запуск макросов нетрадиционными способами
 	description	= "general helping objects and functions",
 	id		= "9809B969-68C5-4188-BC1D-77DF21E5CAB7",
-	version		= "0.1.1",
+	version		= "0.1.2",
 	author		= "x-Team",
 	url_git		= "https://github.com/dr-dba/far-lua-general-utils",
 })
@@ -291,30 +291,27 @@ Xer0X.obj_screen_status_line = {
 	end,
 	set = function(self, text_str, txt_color, ms_show_time, in_timer)
 		if not	in_timer
-		then	if	self.timer
-			and not self.timer.Closed
-			and (	self.text ~= text_str
-			or	ms_show_time
-			or not	text_str)
-			then	self.timer:Close()
-				far.AdvControl("ACTL_REDRAWALL")
-			end
+		then
 			if	self.text_show ~= text_str
 			then	self.text_show  = text_str
-				self.color_txt  = txt_color
-				self.time_show  = ms_show_time
+				far.AdvControl("ACTL_REDRAWALL")
 			end
-			if	ms_show_time
-			and	text_str
+			self.color_txt = txt_color
+			self.time_show = ms_show_time
+			self.timeStart = Far.UpTime
+			if	self.time_show
+			and	self.text_show
 			then	self.timeStart = Far.UpTime
-				self.timer = far.Timer(100, function(sender, t_show_start, text_str)
-					if type(ms_show_time) == "number"
-					and	ms_show_time < Far.UpTime - t_show_start
-					then	self.timer:Close()
-						far.AdvControl("ACTL_REDRAWALL")
-					else	self:set(text_str, txt_color, nil, true)
-					end
-				end, self.timeStart, self.text_show)
+				if not	self.timer
+				or	self.timer.Closed
+				then	self.timer = far.Timer(100, function(sender)
+						if	self.time_show < Far.UpTime - self.timeStart
+						then	self.timer:Close()
+							far.AdvControl("ACTL_REDRAWALL")
+						else	self:set(self.text_show, self.color_txt, nil, true)
+						end
+					end)
+				end
 			end
 		end
 		if text_str
@@ -397,15 +394,22 @@ function Xer0X.fnc_key_prettify(str_key)
 			:gsub("(Ctrl)([%w']*)"	, fnc_key_title_loc)
 			:gsub("(Alt)([%w']*)"	, fnc_key_title_loc)
 			:gsub("(Shift)([%w']*)"	, fnc_key_title_loc)
+			:gsub("(-)([%w']*)"	, fnc_key_title_loc)
 	end
 	return fnc_key_title(str_key
+		:gsub("minus",	"Minus"	)
 		:gsub("shift",	"Shift"	)
 		:gsub("rctrl",	"RCtrl"	)
 		:gsub("lctrl",	"LCtrl"	)
 		:gsub("ctrl",	"Ctrl"	)
 		:gsub("ralt",	"RAlt"	)
 		:gsub("lalt",	"LAlt"	)
-		:gsub("alt",	"Alt"	))
+		:gsub("alt",	"Alt"	)
+		:gsub("pgdn",	"PgDn"	)
+		:gsub("pgup",	"PgUp"	)		
+		:gsub(":hold",	":Hold"	)
+		:gsub(":double",":Double")
+			)
 end -- fnc_key_prettify
 
 function Xer0X.fnc_cons_edit_curs_geomtr(editor_id, edit_info, curs_pstn, cons_rect)

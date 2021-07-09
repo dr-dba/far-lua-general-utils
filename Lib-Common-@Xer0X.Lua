@@ -21,7 +21,7 @@ local nfo = Info({
 	-- запуск макросов нетрадиционными способами
 	description	= "general helping objects and functions",
 	id		= "9809B969-68C5-4188-BC1D-77DF21E5CAB7",
-	version		= "0.1.2",
+	version		= "0.1.3",
 	author		= "x-Team",
 	url_git		= "https://github.com/dr-dba/far-lua-general-utils",
 })
@@ -296,16 +296,15 @@ Xer0X.obj_screen_status_line = {
 			then	self.text_show  = text_str
 				far.AdvControl("ACTL_REDRAWALL")
 			end
-			self.color_txt = txt_color
-			self.time_show = ms_show_time
-			self.timeStart = Far.UpTime
-			if	self.time_show
-			and	self.text_show
-			then	self.timeStart = Far.UpTime
+			if	ms_show_time
+			then	self.time_show = ms_show_time
+				self.color_txt = txt_color
+				self.timeStart = Far.UpTime
 				if not	self.timer
 				or	self.timer.Closed
 				then	self.timer = far.Timer(100, function(sender)
 						if	self.time_show < Far.UpTime - self.timeStart
+						or not	self.text_show
 						then	self.timer:Close()
 							far.AdvControl("ACTL_REDRAWALL")
 						else	self:set(self.text_show, self.color_txt, nil, true)

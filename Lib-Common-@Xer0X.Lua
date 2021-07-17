@@ -21,7 +21,7 @@ local nfo = Info({
 	-- запуск макросов нетрадиционными способами
 	description	= "general helping objects and functions",
 	id		= "9809B969-68C5-4188-BC1D-77DF21E5CAB7",
-	version		= "0.1.4",
+	version		= "0.1.4.1",
 	author		= "x-Team",
 	url_git		= "https://github.com/dr-dba/far-lua-general-utils",
 })
@@ -414,18 +414,19 @@ function Xer0X.fnc_key_prettify(str_key)
 	else	local	ret_val = tbl_keys_ugly[str_key]
 		if not	ret_val
 		then	ret_val = fnc_key_title(str_key
-				:gsub("minus",	"Minus"	)
-				:gsub("shift",	"Shift"	)
-				:gsub("rctrl",	"RCtrl"	)
-				:gsub("lctrl",	"LCtrl"	)
-				:gsub("ctrl",	"Ctrl"	)
-				:gsub("ralt",	"RAlt"	)
-				:gsub("lalt",	"LAlt"	)
-				:gsub("alt",	"Alt"	)
-				:gsub("pgdn",	"PgDn"	)
-				:gsub("pgup",	"PgUp"	)
-				:gsub(":hold",	":Hold"	)
-				:gsub(":double",":Double")
+				:gsub("minus",	"Minus"		)
+				:gsub("shift",	"Shift"		)
+				:gsub("rctrl",	"RCtrl"		)
+				:gsub("lctrl",	"LCtrl"		)
+				:gsub("ctrl",	"Ctrl"		)
+				:gsub("ralt",	"RAlt"		)
+				:gsub("lalt",	"LAlt"		)
+				:gsub("alt",	"Alt"		)
+				:gsub("CtrLAlt","CtrlAlt"	)
+				:gsub("pgdn",	"PgDn"		)
+				:gsub("pgup",	"PgUp"		)
+				:gsub(":hold",	":Hold"		)
+				:gsub(":double",":Double"	)
 					)
 			tbl_keys_ugly[str_key] = ret_val
 			tbl_keys_prty[ret_val] = true

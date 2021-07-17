@@ -21,7 +21,7 @@ local nfo = Info({
 	-- запуск макросов нетрадиционными способами
 	description	= "general helping objects and functions",
 	id		= "9809B969-68C5-4188-BC1D-77DF21E5CAB7",
-	version		= "0.1.3",
+	version		= "0.1.4",
 	author		= "x-Team",
 	url_git		= "https://github.com/dr-dba/far-lua-general-utils",
 })
@@ -66,6 +66,9 @@ local DN_CLOSE		= far_Flags.DN_CLOSE
 
 local editor_GetInfo	= editor.GetInfo
 local far_AdvControl	= far.AdvControl
+local far_Timer		= far.Timer
+local far_Message	= far.Message
+local far_Text		= far.Text
 local math_max		= math.max
 local bit64_band	= bit64.band
 -- C.COL_MENUTITLE
@@ -292,44 +295,48 @@ Xer0X.obj_screen_status_line = {
 	set = function(self, text_str, txt_color, ms_show_time, in_timer)
 		if not	in_timer
 		then
+			local do_redraw
 			if	self.text_show ~= text_str
-			then	self.text_show  = text_str
-				far.AdvControl("ACTL_REDRAWALL")
+			then	self.text_show  = text_str; do_redraw = true
+			end
+			if	self.color_txt ~= txt_color
+			then	self.color_txt  = txt_color;do_redraw = true
 			end
 			if	ms_show_time
 			then	self.time_show = ms_show_time
-				self.color_txt = txt_color
 				self.timeStart = Far.UpTime
 				if not	self.timer
 				or	self.timer.Closed
-				then	self.timer = far.Timer(100, function(sender)
+				then	self.timer = far_Timer(1000, function(sender)
 						if	self.time_show < Far.UpTime - self.timeStart
 						or not	self.text_show
 						then	self.timer:Close()
-							far.AdvControl("ACTL_REDRAWALL")
+							far_AdvControl("ACTL_REDRAWALL")
 						else	self:set(self.text_show, self.color_txt, nil, true)
 						end
 					end)
 				end
 			end
+			if do_redraw then far_AdvControl("ACTL_REDRAWALL") end
 		end
 		if text_str
-		then far.Text(
+		then far_Text(
 			1, 0, txt_color or CLR_MENU_TEXT,
 			text_str == "" and "" or " "..text_str.." "
 				)
 		end
-		far.Text()
+		far_Text()
 	end -- fnc_status_set
 } 
 
-local tmr_msg
+local tmr_trans_msg
 local TRANS_MSG_CLOSE_TIME_MS = 3000
 local TRANS_MSG_CHECK_TIME_MS = 100
+
 function Xer0X.fnc_trans_msg(msg_status, msg_title, msg_flags, msg_buttons, close_on_key_press)
-	if	tmr_msg
-	and not	tmr_msg.Closed
-	then	tmr_msg:Close()
+	if	tmr_trans_msg
+	and not	tmr_trans_msg.Closed
+	then	tmr_trans_msg:Close()
 	end
 	if	msg_status == "OFF"
 	and not msg_title
@@ -366,10 +373,10 @@ function Xer0X.fnc_trans_msg(msg_status, msg_title, msg_flags, msg_buttons, clos
 			end
 		end
 		t1 = Far.UpTime
-		fnc_msg_tmp(tmr_msg)
-		tmr_msg = far.Timer(TRANS_MSG_CHECK_TIME_MS, fnc_msg_tmp, Far.UpTime, close_on_key_press)
+		fnc_msg_tmp(tmr_trans_msg)
+		tmr_trans_msg = far_Timer(TRANS_MSG_CHECK_TIME_MS, fnc_msg_tmp, Far.UpTime, close_on_key_press)
 	else
-		msg_res = far.Message(msg_status, msg_title, msg_buttons, msg_flags)
+		msg_res = far_Message(msg_status, msg_title, msg_buttons, msg_flags)
 	end
 	return	msg_res
 end
@@ -384,32 +391,50 @@ function Xer0X.fnc_case_toggle(str)
 	return string.gsub(str, "(%a)([%w']*)", fnc_toggle_int)
 end
 
-function Xer0X.fnc_key_prettify(str_key)
-	local function fnc_key_title(str_key)
-		local function fnc_key_title_loc(first, rest) 
-			return first..rest:sub(1, 1):upper()..rest:sub(2)
-		end
-		return fnc_key_title_loc("", str_key)
-			:gsub("(Ctrl)([%w']*)"	, fnc_key_title_loc)
-			:gsub("(Alt)([%w']*)"	, fnc_key_title_loc)
-			:gsub("(Shift)([%w']*)"	, fnc_key_title_loc)
-			:gsub("(-)([%w']*)"	, fnc_key_title_loc)
+do -- key prettifying code block
+
+local tbl_keys_prty = { }
+local tbl_keys_ugly = { }
+
+local function fnc_key_title(str_key)
+	local function fnc_key_title_loc(first, rest)
+		return first..rest:sub(1, 1):upper()..rest:sub(2)
 	end
-	return fnc_key_title(str_key
-		:gsub("minus",	"Minus"	)
-		:gsub("shift",	"Shift"	)
-		:gsub("rctrl",	"RCtrl"	)
-		:gsub("lctrl",	"LCtrl"	)
-		:gsub("ctrl",	"Ctrl"	)
-		:gsub("ralt",	"RAlt"	)
-		:gsub("lalt",	"LAlt"	)
-		:gsub("alt",	"Alt"	)
-		:gsub("pgdn",	"PgDn"	)
-		:gsub("pgup",	"PgUp"	)		
-		:gsub(":hold",	":Hold"	)
-		:gsub(":double",":Double")
-			)
+	return fnc_key_title_loc("", str_key)
+		:gsub("(Ctrl)([%w']*)"	, fnc_key_title_loc)
+		:gsub("(Alt)([%w']*)"	, fnc_key_title_loc)
+		:gsub("(Shift)([%w']*)"	, fnc_key_title_loc)
+		:gsub("(-)([%w']*)"	, fnc_key_title_loc)
+end
+
+function Xer0X.fnc_key_prettify(str_key)
+	if	tbl_keys_prty[str_key]
+	then -- already pretty
+		return	str_key
+	else	local	ret_val = tbl_keys_ugly[str_key]
+		if not	ret_val
+		then	ret_val = fnc_key_title(str_key
+				:gsub("minus",	"Minus"	)
+				:gsub("shift",	"Shift"	)
+				:gsub("rctrl",	"RCtrl"	)
+				:gsub("lctrl",	"LCtrl"	)
+				:gsub("ctrl",	"Ctrl"	)
+				:gsub("ralt",	"RAlt"	)
+				:gsub("lalt",	"LAlt"	)
+				:gsub("alt",	"Alt"	)
+				:gsub("pgdn",	"PgDn"	)
+				:gsub("pgup",	"PgUp"	)
+				:gsub(":hold",	":Hold"	)
+				:gsub(":double",":Double")
+					)
+			tbl_keys_ugly[str_key] = ret_val
+			tbl_keys_prty[ret_val] = true
+		end
+		return ret_val
+	end
 end -- fnc_key_prettify
+
+end -- end of key prettifying code block
 
 function Xer0X.fnc_cons_edit_curs_geomtr(editor_id, edit_info, curs_pstn, cons_rect)
 	edit_info = edit_info or editor_GetInfo(editor_id)

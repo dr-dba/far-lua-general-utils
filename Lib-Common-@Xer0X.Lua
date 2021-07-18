@@ -21,7 +21,7 @@ local nfo = Info({
 	-- запуск макросов нетрадиционными способами
 	description	= "general helping objects and functions",
 	id		= "9809B969-68C5-4188-BC1D-77DF21E5CAB7",
-	version		= "0.1.4.1",
+	version		= "0.1.5",
 	author		= "x-Team",
 	url_git		= "https://github.com/dr-dba/far-lua-general-utils",
 })
@@ -160,41 +160,64 @@ local function fnc_tbl_copy(tbl_src)
 	return tbl_new
 end
 
-local function fnc_tbl_copy_to(tbl_from, key_from, tbl_dest, fnc_how_tbl, fnc_how_val)
-	if type(key_from)	== "table"
-	and (	tbl_dest	== nil
-	or	type(tbl_dest)	== "function")
-	and	fnc_how_val	== nil
-	then	fnc_how_val	 = fnc_how_tbl
-		fnc_how_tbl	 = tbl_dest
-		tbl_dest	 = key_from
-		key_from	 = nil
+local function fnc_tbl_copy_to(tbl_from, key_from, tbl_dest, key_dest, fnc_how_tbl, fnc_how_val)
+	if type(key_from) == "table"
+	and type(tbl_dest)~= "table"
+	-- shift right
+	then	fnc_how_val =	fnc_how_tbl
+		fnc_how_tbl =	key_dest
+		key_dest =	tbl_dest
+		tbl_dest =	key_from
+		key_from =	nil
+	end
+	if type(key_dest) == "function"
+	-- shift right
+	then	fnc_how_val =	fnc_how_tbl
+		fnc_how_tbl =	key_dest
+		key_dest =	nil
 	end
 	if not	tbl_dest
 	then	tbl_dest = { }
 	end
+	if	key_dest == nil
+	and	key_from ~= nil
+	then	key_dest = key_from
+	end
 	local	tbl_from_loc
 	local	tbl_dest_loc
 	if	key_from
-	then	if not	tbl_dest[key_from]
-		then	tbl_dest[key_from] = { }
-		end
-		tbl_from_loc = tbl_from[key_from]
-		tbl_dest_loc = tbl_dest[key_from]
+	then	tbl_from_loc = tbl_from[key_from]
 	else	tbl_from_loc = tbl_from
-		tbl_dest_loc = tbl_dest
 		tbl_from = nil
+	end
+	if	key_dest
+	then	if not	tbl_dest[key_dest]
+		then	tbl_dest[key_dest] = { }
+		end
+		tbl_dest_loc = tbl_dest[key_dest]
+	else	tbl_dest_loc = tbl_dest
 		tbl_dest = nil
 	end
 	for ii_key, ii_val in pairs(tbl_from_loc)
 	do	if type(ii_val) == "table"
 		then	if not	fnc_how_tbl
 			or not	fnc_how_tbl(tbl_from, tbl_from_loc, tbl_dest, tbl_dest_loc, ii_key, ii_val)
-			then	tbl_dest_loc[ii_key] = fnc_tbl_copy_to(tbl_from_loc, ii_key, tbl_dest_loc, fnc_how_tbl, fnc_how_val)
+			then
+				if type(ii_key) == "number"
+				and	ii_key <= #tbl_from_loc
+				then	tbl_dest_loc[#tbl_dest_loc + 1]
+						= fnc_tbl_copy_to(tbl_from_loc, ii_key, tbl_dest_loc, #tbl_dest_loc + 1,fnc_how_tbl, fnc_how_val)
+				else	tbl_dest_loc[ii_key]
+						= fnc_tbl_copy_to(tbl_from_loc, ii_key, tbl_dest_loc, ii_key,		fnc_how_tbl, fnc_how_val)
+				end
 			end
 		else	if not	fnc_how_val
 			or not	fnc_how_val(tbl_from, tbl_from_loc, tbl_dest, tbl_dest_loc, ii_key, ii_val)
-			then	tbl_dest_loc[ii_key] = ii_val
+			then	if type(ii_key) == "number"
+				and	ii_key <= #tbl_from_loc
+				then	tbl_dest_loc[#tbl_dest_loc + 1] = ii_val
+				else	tbl_dest_loc[ii_key]		= ii_val
+				end
 			end
 		end
         end

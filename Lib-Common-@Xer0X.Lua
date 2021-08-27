@@ -21,7 +21,7 @@ local nfo = Info({
 	-- запуск макросов нетрадиционными способами
 	description	= "general helping objects and functions",
 	id		= "9809B969-68C5-4188-BC1D-77DF21E5CAB7",
-	version		= "0.1.5",
+	version		= "0.1.7",
 	author		= "x-Team",
 	url_git		= "https://github.com/dr-dba/far-lua-general-utils",
 })
@@ -51,28 +51,36 @@ end
 local far_Guids	= far.Guids
 local far_Flags = far.Flags
 local far_Colors= far.Colors
+local F = far.Flags
 
-local ACTL_GETFARRECT	= far_Flags.ACTL_GETFARRECT
-local ACTL_GETCURSORPOS = far_Flags.ACTL_GETCURSORPOS
-local ACTL_SETCURSORPOS	= far_Flags.ACTL_SETCURSORPOS
-local ACTL_REDRAWALL	= far_Flags.ACTL_REDRAWALL
-local EOPT_SHOWTITLEBAR = far_Flags.EOPT_SHOWTITLEBAR
-local EOPT_SHOWKEYBAR	= far_Flags.EOPT_SHOWKEYBAR
-local EOPT_SHOWSCROLLBAR= far_Flags.EOPT_SHOWSCROLLBAR
-local DI_SINGLEBOX	= far_Flags.DI_SINGLEBOX
-local DI_TEXT		= far_Flags.DI_TEXT
-local FDLG_NONMODAL	= far_Flags.FDLG_NONMODAL
-local DN_CLOSE		= far_Flags.DN_CLOSE
+local KEY_EVENT		= F.KEY_EVENT
+local MOUSE_EVENT	= F.MOUSE_EVENT
+local MENU_EVENT	= F.MENU_EVENT
+local FOCUS_EVENT	= F.FOCUS_EVENT
+local WND_BUF_SIZE_EVT	= F.WINDOW_BUFFER_SIZE_EVENT 
+local ACTL_GETFARRECT	= F.ACTL_GETFARRECT
+local ACTL_GETCURSORPOS = F.ACTL_GETCURSORPOS
+local ACTL_SETCURSORPOS	= F.ACTL_SETCURSORPOS
+local ACTL_REDRAWALL	= F.ACTL_REDRAWALL
+local EOPT_SHOWTITLEBAR = F.EOPT_SHOWTITLEBAR
+local EOPT_SHOWKEYBAR	= F.EOPT_SHOWKEYBAR
+local EOPT_SHOWSCROLLBAR= F.EOPT_SHOWSCROLLBAR
+local DI_SINGLEBOX	= F.DI_SINGLEBOX
+local DI_TEXT		= F.DI_TEXT
+local FDLG_NONMODAL	= F.FDLG_NONMODAL
+local DN_CLOSE		= F.DN_CLOSE
 
+local far_InputRecordToName 
+			= far.InputRecordToName
+local mf_postmacro	= mf.postmacro
 local editor_GetInfo	= editor.GetInfo
 local far_AdvControl	= far.AdvControl
 local far_Timer		= far.Timer
 local far_Message	= far.Message
 local far_Text		= far.Text
 local math_max		= math.max
+local math_min		= math.min
 local bit64_band	= bit64.band
--- C.COL_MENUTITLE
-local CLR_MENU_TEXT	= far_AdvControl(far_Flags.ACTL_GETCOLOR, far_Colors.COL_MENUHIGHLIGHT)
 
 local str_lower = utf8.Utf8_lower	or utf8.lower
 local str_upper = utf8.Utf8_upper	or utf8.upper
@@ -80,20 +88,23 @@ local str_gmatch= utf8.Utf8_gmatch	or utf8.gmatch
 local str_match = utf8.Utf8_match	or utf8.match
 local str_find	= utf8.Utf8_find	or utf8.find
 local str_gsub	= utf8.Utf8_gsub	or utf8.gsub
+local str_rev	= utf8.reverse		or utf8.reverse
 local str_len	= utf8.Utf8_len		or utf8.len
 local str_sub	= utf8.sub
 local str_cfind = utf8.cfind
 local str_format= utf8.format
-local math_max	= math.max
 local tbl_concat= table.concat
 local tbl_insert= table.insert
-
 local gsub	= utf8.gsub
 local match	= utf8.match
 local upper	= utf8.upper
 local strlen	= utf8.len
 local io_open	= io.open
+local tostr	= tostring
 local win_uuid	= win.Uuid
+
+-- C.COL_MENUTITLE
+local CLR_MENU_TEXT	= far_AdvControl(far_Flags.ACTL_GETCOLOR, far_Colors.COL_MENUHIGHLIGHT)
 local GUID_ZERO	= "00000000-0000-0000-0000-000000000000"
 
 local	tbl_far_guid_names = { }
@@ -142,6 +153,18 @@ function Xer0X.fnc_norm_menu_value(item_text)
 			, "<&AND>", ""		)
 end
 
+
+local function fnc_cfind_safe(str, expr, line_pos, is_plain)
+	local	res, pos, fin, fnd = pcall(str_cfind, str, expr, line_pos, is_plain)
+	return	res,
+		not res and pos or nil,
+		res and pos or nil,
+		res and fin or nil,
+		res and fnd or nil
+end
+
+Xer0X.fnc_cfind_safe = fnc_cfind_safe
+
 function Xer0X.fnc_file_exists(file_path)
 	local	hnd = io_open(file_path, "r")
 	if	hnd
@@ -151,11 +174,16 @@ function Xer0X.fnc_file_exists(file_path)
 	end
 end
 
-local function fnc_tbl_copy(tbl_src)
-	local	tbl_new = { }
+local function fnc_tbl_copy(tbl_src, tbl_new, no_dest_overwrite)
+	if not	tbl_new
+	then	tbl_new = { }
+	end
 	local	ii, val
 	repeat	ii, val = next(tbl_src, ii)
-		if ii then tbl_new[ii] = type(val) == "table" and fnc_tbl_copy(val) or val end
+		if ii 
+		and(not no_dest_overwrite or tbl_new[ii] == nil) 
+		then tbl_new[ii] = type(val) == "table" and fnc_tbl_copy(val) or val 
+		end
 	until not ii
 	return tbl_new
 end
@@ -340,7 +368,9 @@ Xer0X.obj_screen_status_line = {
 					end)
 				end
 			end
-			if do_redraw then far_AdvControl("ACTL_REDRAWALL") end
+			if do_redraw 
+			then	far_AdvControl("ACTL_REDRAWALL") 
+			end
 		end
 		if text_str
 		then far_Text(
@@ -573,6 +603,10 @@ local function fnc_ffi_cdef_safe(def_txt, silent)
 end
 
 Xer0X.fnc_ffi_cdef_safe = fnc_ffi_cdef_safe
+
+local tbl_hld_keys = { }
+Xer0X.tbl_hld_keys = tbl_hld_keys
+Xer0X.cnt_hld_all_keys = 0
 
 
 return Xer0X

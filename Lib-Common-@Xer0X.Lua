@@ -180,8 +180,7 @@ local function fnc_tbl_copy(tbl_src, tbl_new, no_dest_overwrite)
 	end
 	local	ii, val
 	repeat	ii, val = next(tbl_src, ii)
-		if ii 
-		and(not no_dest_overwrite or tbl_new[ii] == nil) 
+		if ii and (not no_dest_overwrite or tbl_new[ii] == nil) 
 		then tbl_new[ii] = type(val) == "table" and fnc_tbl_copy(val) or val 
 		end
 	until not ii
@@ -584,6 +583,47 @@ function Xer0X.fnc_str_split(str_inp, sep, uniq_only)
 		end
 	end
 	return tbl_res, tbl_unq
+end
+
+function Xer0X.fnc_num_to_str(n)
+	if	n == nil
+	then	return "+<NiL>"
+	elseif	n == 0
+	and	1 / n < 0
+	then	return "-0"
+	elseif	1 / n == 0
+	then	return n < 0 and "-inf" or "+inf"
+	elseif	n ~= n
+	then	return "nan"
+	else	return string.format("%+1.5g", n) 
+	end
+end
+
+function Xer0X.fnc_pcall_expect_error(f, msg)
+	local	ok, err = pcall(f)
+	if	ok
+	then	error("error check unexpectedly succeeded", 2) 
+	end
+	if	msg 
+	then	if type(err) ~= "string" 
+		then error("error check failed with "..tostring(err), 2)
+		end
+		local line, err2 = string.match(err, ":(%d*): (.*)")
+		if err2 ~= msg 
+		then	if err2:gsub(" got no value", " got nil") == msg 
+			then return
+			end
+			error("error check failed with "..err, 2)
+		end
+	end
+end
+
+function Xer0X.fnc_ffi_bin_to_hex(bytes, len)
+	return string.gsub(
+		ffi.string(bytes, len), 
+		'(.)', 
+		function(c) return string.format('%02x', string.byte(c)) end
+	)
 end
 
 if not	_G.ffi

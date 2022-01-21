@@ -103,6 +103,9 @@ local io_open	= io.open
 local tostr	= tostring
 local win_uuid	= win.Uuid
 
+local string_sub	= string.sub
+local string_match	= string.match
+
 -- C.COL_MENUTITLE
 local CLR_MENU_TEXT	= far_AdvControl(far_Flags.ACTL_GETCOLOR, far_Colors.COL_MENUHIGHLIGHT)
 local GUID_ZERO	= "00000000-0000-0000-0000-000000000000"
@@ -148,9 +151,9 @@ function Xer0X.fnc_norm_menu_value(item_text)
 		str_gsub(
 		str_gsub(
 			Xer0X.fnc_str_trim1(item_text)
-			, "&", "<&AND>"		)
+			, "&"	,	"<&AND>")
 			, "<&AND><&AND>", "&"	)
-			, "<&AND>", ""		)
+			, "<&AND>"	, ""	)
 end
 
 
@@ -317,6 +320,24 @@ function Xer0X.fnc_file_text_save(sz_file_path, text)
 	f:write(text)
 	f:close()
 end
+
+function Xer0X.fnc_path_dissect(sz_file_path, no_end_slash)
+	local	path_part = str_match(str_match(sz_file_path, "^(.+[\\/])"), "(.+[^\\/])")
+	local	path_fold = path_part and path_part or sz_file_path
+	if	string_sub(sz_file_path, 1, 4) == "\\\\?\\"
+	then	-- Plugin?
+		path_fold = string_sub(path_fold, 5)
+	end
+	if	string_sub(path_fold, 1, 4) == "UNC\\"
+	then	-- Network?
+		path_fold = "\\"..string_sub(path_fold, 4)
+	end
+	local	unc_host = string_match(path_fold, "^\\\\([^\\]+)")
+	local	path_root = unc_host
+			and	string_match(path_fold, "^\\\\.-\\[^\\]+[^\\]") 
+			or	string_match(path_fold, "^[^\\]:") 
+	return	path_root == path_fold, path_root, path_fold
+end -- fnc_path_dissect
 
 local function fnc_macro_key_run(key_inp)
 	local	is_macro
@@ -616,6 +637,30 @@ function Xer0X.fnc_pcall_expect_error(f, msg)
 			error("error check failed with "..err, 2)
 		end
 	end
+end
+
+function Xer0X.fnc_file_desc_get(file)
+	local sz_descr
+	local p = file:match(".*\\") or ""
+	local n = file:sub(p:len() + 1)
+	for df in Far.Cfg_Get("Descriptions", "ListNames"):lower():gmatch("[^,]+")
+	do	if win.GetFileAttr(p..df) 
+		then    local F = far.Flags
+			editor.Editor(p..df, nil, nil, nil, nil, nil, F.EF_NONMODAL + F.EF_IMMEDIATERETURN + F.EF_DISABLEHISTORY + F.EF_DISABLESAVEPOS)
+			local cp = editor.GetInfo().CodePage
+			editor.Quit()
+			far.AdvControl("ACTL_COMMIT")
+			for s in io.lines(p..df) 
+			do	s = win.Utf16ToUtf8(win.MultiByteToWideChar(s, cp))
+				if regex.find(s, n, 1, "i") 
+				then	sz_descr = regex.gsub(s, '/^.*?'..n..'"?[\t ]+/i', "")
+					break
+				end
+			end
+		end
+		if sz_descr then break end
+	end
+	return sz_descr
 end
 
 function Xer0X.fnc_ffi_bin_to_hex(bytes, len)

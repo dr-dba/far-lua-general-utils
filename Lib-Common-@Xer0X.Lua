@@ -250,8 +250,8 @@ local function fnc_tbl_copy_to(tbl_from, key_from, tbl_dest, key_dest, fnc_how_t
 				end
 			end
 		end
-        end
-        return	tbl_dest_loc
+	end
+	return tbl_dest_loc
 end -- fnc_tbl_copy_to
 
 Xer0X.fnc_tbl_copy	= fnc_tbl_copy
@@ -441,10 +441,11 @@ function Xer0X.fnc_trans_msg(msg_status, msg_title, msg_flags, msg_buttons, clos
 							is_timeout = true
 							goto check_timeout
 						end
-                                        end
+					end
 				end
 			end
 		end
+
 		t1 = Far.UpTime
 		fnc_msg_tmp(tmr_trans_msg)
 		tmr_trans_msg = far_Timer(TRANS_MSG_CHECK_TIME_MS, fnc_msg_tmp, Far.UpTime, close_on_key_press)
@@ -470,9 +471,11 @@ local tbl_keys_prty = { }
 local tbl_keys_ugly = { }
 
 local function fnc_key_title(str_key)
+
 	local function fnc_key_title_loc(first, rest)
 		return first..rest:sub(1, 1):upper()..rest:sub(2)
 	end
+
 	return fnc_key_title_loc("", str_key)
 		:gsub("(Ctrl)([%w']*)"	, fnc_key_title_loc)
 		:gsub("(Alt)([%w']*)"	, fnc_key_title_loc)
@@ -645,7 +648,7 @@ function Xer0X.fnc_file_desc_get(file)
 	local n = file:sub(p:len() + 1)
 	for df in Far.Cfg_Get("Descriptions", "ListNames"):lower():gmatch("[^,]+")
 	do	if win.GetFileAttr(p..df) 
-		then    local F = far.Flags
+		then	local F = far.Flags
 			editor.Editor(p..df, nil, nil, nil, nil, nil, F.EF_NONMODAL + F.EF_IMMEDIATERETURN + F.EF_DISABLEHISTORY + F.EF_DISABLESAVEPOS)
 			local cp = editor.GetInfo().CodePage
 			editor.Quit()
